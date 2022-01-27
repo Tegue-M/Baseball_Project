@@ -1,8 +1,9 @@
+#=== Setting up environment 
 provider "aws" {
    region = "eu-west-1"
 }
 
-
+#=== Creating table ===
 resource "aws_dynamodb_table" "ddbtable" {
   name             = "myTable-007"
   hash_key         = "id"
@@ -15,6 +16,7 @@ resource "aws_dynamodb_table" "ddbtable" {
   }
 }
 
+#=== Creating bucket
 resource "aws_s3_bucket" "b" {
   bucket = "my-baseball-buck-007"
   acl    = "private"
@@ -25,7 +27,7 @@ resource "aws_s3_bucket" "b" {
   }
 }
 
-
+#=== Creating write policy
 resource "aws_iam_role_policy" "write_policy" {
   name = "lambda_write_policy"
   role = aws_iam_role.writeRole.id
@@ -33,14 +35,13 @@ resource "aws_iam_role_policy" "write_policy" {
   policy = file("./writeRole/write_policy.json")
 }
 
-
+#=== Creating read policy
 resource "aws_iam_role_policy" "read_policy" {
   name = "lambda_read_policy"
   role = aws_iam_role.readRole.id
 
   policy = file("./readRole/read_policy.json")
 }
-
 
 resource "aws_iam_role" "writeRole" {
   name = "myWriteRole"
@@ -49,7 +50,7 @@ resource "aws_iam_role" "writeRole" {
 
 }
 
-
+#=== Creating read role
 resource "aws_iam_role" "readRole" {
   name = "myReadRole"
 
@@ -57,7 +58,7 @@ resource "aws_iam_role" "readRole" {
 
 }
 
-
+#=== Creating write function
 resource "aws_lambda_function" "writeLambda" {
 
   filename      = "writeterra.zip"
@@ -67,7 +68,7 @@ resource "aws_lambda_function" "writeLambda" {
   runtime       = "nodejs12.x"
 }
 
-
+#=== Creating read function
 resource "aws_lambda_function" "readLambda" {
   filename      = "readterra.zip"
   function_name = "readLambda"
@@ -77,13 +78,13 @@ resource "aws_lambda_function" "readLambda" {
 }
 
 
-
+#=== Creating rest API
 resource "aws_api_gateway_rest_api" "apiLambda" {
   name        = "myAPI"
 
 }
 
-
+#=== creating write resource
 resource "aws_api_gateway_resource" "writeResource" {
   rest_api_id = aws_api_gateway_rest_api.apiLambda.id
   parent_id   = aws_api_gateway_rest_api.apiLambda.root_resource_id
@@ -91,7 +92,7 @@ resource "aws_api_gateway_resource" "writeResource" {
 
 }
 
-
+#=== creating write method
 resource "aws_api_gateway_method" "writeMethod" {
    rest_api_id   = aws_api_gateway_rest_api.apiLambda.id
    resource_id   = aws_api_gateway_resource.writeResource.id
@@ -99,7 +100,7 @@ resource "aws_api_gateway_method" "writeMethod" {
    authorization = "NONE"
 }
 
-
+#=== creating read resource
 resource "aws_api_gateway_resource" "readResource" {
   rest_api_id = aws_api_gateway_rest_api.apiLambda.id
   parent_id   = aws_api_gateway_rest_api.apiLambda.root_resource_id
@@ -107,7 +108,7 @@ resource "aws_api_gateway_resource" "readResource" {
 
 }
 
-
+#=== creating read method
 resource "aws_api_gateway_method" "readMethod" {
    rest_api_id   = aws_api_gateway_rest_api.apiLambda.id
    resource_id   = aws_api_gateway_resource.readResource.id
@@ -117,7 +118,7 @@ resource "aws_api_gateway_method" "readMethod" {
 
 
 
-
+#=== creating API write integration
 resource "aws_api_gateway_integration" "writeInt" {
    rest_api_id = aws_api_gateway_rest_api.apiLambda.id
    resource_id = aws_api_gateway_resource.writeResource.id
@@ -129,7 +130,7 @@ resource "aws_api_gateway_integration" "writeInt" {
    
 }
 
-
+#=== creating API read integration
 resource "aws_api_gateway_integration" "readInt" {
    rest_api_id = aws_api_gateway_rest_api.apiLambda.id
    resource_id = aws_api_gateway_resource.readResource.id
@@ -142,7 +143,7 @@ resource "aws_api_gateway_integration" "readInt" {
 }
 
 
-
+#=== creating API deployment 
 resource "aws_api_gateway_deployment" "apideploy" {
    depends_on = [ aws_api_gateway_integration.writeInt, aws_api_gateway_integration.readInt]
 
@@ -150,7 +151,7 @@ resource "aws_api_gateway_deployment" "apideploy" {
    stage_name  = "Prod"
 }
 
-
+#=== creating lambda write permission
 resource "aws_lambda_permission" "writePermission" {
    statement_id  = "AllowExecutionFromAPIGateway"
    action        = "lambda:InvokeFunction"
@@ -161,7 +162,7 @@ resource "aws_lambda_permission" "writePermission" {
 
 }
 
-
+#=== creating lambda read permission
 resource "aws_lambda_permission" "readPermission" {
    statement_id  = "AllowExecutionFromAPIGateway"
    action        = "lambda:InvokeFunction"
@@ -172,7 +173,7 @@ resource "aws_lambda_permission" "readPermission" {
 
 }
 
-
+#=== Output
 output "base_url" {
   value = aws_api_gateway_deployment.apideploy.invoke_url
 }
