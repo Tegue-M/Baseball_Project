@@ -45,6 +45,7 @@ resource "aws_iam_role_policy" "read_policy" {
 
 }
 
+#=== Creating write role
 resource "aws_iam_role" "writeRole" {
   name = "myWriteRole"
 
