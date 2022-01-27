@@ -147,7 +147,7 @@ resource "aws_api_gateway_resource" "readResource" {
 resource "aws_api_gateway_method" "readMethod" {
   rest_api_id   = aws_api_gateway_rest_api.apiLambda.id
   resource_id   = aws_api_gateway_resource.readResource.id
-  http_method   = "POST"
+  http_method   = "GET"
   authorization = "NONE"
 }
 
