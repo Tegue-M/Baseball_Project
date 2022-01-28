@@ -6,15 +6,38 @@ provider "aws" {
 #=== Creating table ===
 resource "aws_dynamodb_table" "ddbtable" {
   name           = "myTable-007"
-  hash_key       = "id"
+  hash_key       = "UserId"
   billing_mode   = "PROVISIONED"
   read_capacity  = 5
   write_capacity = 5
   attribute {
-    name = "id"
+    name = "UserId"
     type = "S"
   }
 }
+
+#=== Adding dummy record
+
+resource "aws_dynamodb_table_item" "item1" {
+  
+     depends_on = [
+      aws_dynamodb_table.ddbtable
+    ]
+
+table_name = aws_dynamodb_table.ddbtable.name
+hash_key =  aws_dynamodb_table.ddbtable.hash_key
+
+item = <<ITEM
+{
+
+"UserId": {"S": "UserA"},
+"Name": {"S": "Tegue"},
+"Surname": {"S": "Morrison"}
+
+}
+ITEM
+}
+
 
 #=== Creating bucket
 resource "aws_s3_bucket" "b" {
